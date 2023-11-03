@@ -11,12 +11,17 @@ import matplotlib.pyplot as plt
 
 from scipy.interpolate import griddata
 from scipy.interpolate import NearestNDInterpolator
+from scipy.stats import linregress
+
+import cartopy.crs as ccrs
+import cartopy.feature as cfeature
 
 from krttdkit.acquire import modis
 from krttdkit.operate import enhance as enh
 from krttdkit.products import FeatureGrid
 from krttdkit.products import HyperGrid
 from krttdkit.visualize import guitools as gt
+from krttdkit.visualize import geoplot as gp
 
 def search_modis():
     modis_grans = modis.query_modis_l2(
@@ -121,14 +126,154 @@ class FG1D:
     def data(self, label=None):
         return self._data[self.labels.index(label)]
 
+    def mask(self, mask:np.ndarray):
+        return FG1D(self.labels, [X[mask] for X in self._data])
+
+    def scatter(self, xlabel, ylabel, clabel=None, get_trend=False, show=True,
+                fig_path:Path=None, plot_spec:dict={}):
+        """
+        Make a scatter plot of the 2 provided datasets stored in this FG1D,
+        optionally coloring points by a third dataset
+        """
+        ps = {"xlabel":xlabel, "ylabel":ylabel, "trend_color":"red",
+              "trend_width":3, "marker_size":4, "cmap":"nipy_spectral",
+              "text_size":12, }
+        ps.update(plot_spec)
+
+        plt.rcParams.update({"font.size":ps["text_size"]})
+
+        X = self.data(xlabel)
+        Y = self.data(ylabel)
+        C = None if clabel is None else ceres.data(clabel)
+
+        fig, ax = plt.subplots()
+        scat = ax.scatter(X, Y, c=C,
+                          s=ps.get("marker_size"),
+                          cmap=ps.get("cmap"),
+                          )
+        if not clabel is None:
+            fig.colorbar(scat)
+        if get_trend:
+            slope,intc,rval = self.trend(xlabel, ylabel)
+            Tx = np.copy(X)
+            Ty = Tx*slope + intc
+            ax.plot(Tx, Ty,
+                    linewidth=ps.get("trend_width"),
+                    label=f"y={slope:.3f}x+{intc:.3f}\nR^2 = {rval**2:.3f}",
+                    color=ps.get("trend_color"),
+                    )
+            ax.legend()
+        ax.set_title(ps.get("title"))
+        ax.set_xlabel(ps.get("xlabel"))
+        ax.set_ylabel(ps.get("ylabel"))
+        if show:
+            plt.show()
+        if fig_path:
+            plt.savefig(fig_path.as_posix())
+        plt.clf()
+
+    def heatmap(self, xlabel, ylabel, xbins=256, ybins=256, get_trend=False,
+                show=True, fig_path:Path=None, plot_spec:dict={}):
+        """
+        Generate a heatmap of the 2 provided datasets in this FG1D
+        """
+        ps = {"xlabel":xlabel, "ylabel":ylabel, "trend_color":"red",
+              "trend_width":3, "cmap":"gist_ncar", "text_size":12, }
+        ps.update(plot_spec)
+        X = self.data(xlabel)
+        Y = self.data(ylabel)
+        M, coords = enh.get_nd_hist(
+                arrays=(X, Y),
+                bin_counts=(xbins, ybins),
+                )
+        hcoords, vcoords = tuple(coords)
+        extent = (min(hcoords), max(hcoords), min(vcoords), max(vcoords))
+
+        plt.rcParams.update({"font.size":ps["text_size"]})
+        fig, ax = plt.subplots()
+        im = ax.pcolormesh(hcoords, vcoords, M,
+                cmap=plot_spec.get("cmap"),
+                #vmax=plot_spec.get("vmax"),
+                #extent=extent,
+                #norm=plot_spec.get("imshow_norm"),
+                #origin="lower",
+                #aspect=plot_spec.get("imshow_aspect")
+                )
+        if get_trend:
+            slope,intc,rval = self.trend(xlabel, ylabel)
+            Tx = np.copy(hcoords)
+            Ty = Tx * slope + intc
+            ax.plot(Tx, Ty,
+                    linewidth=ps.get("trend_width"),
+                    label=f"y={slope:.3f}x+{intc:.3f}\nR^2 = {rval**2:.3f}",
+                    color=ps.get("trend_color"),
+                    )
+            ax.legend()
+        #ax.set(aspect=1)
+        cbar = fig.colorbar(im, ax=ax, orientation="vertical", label="Count")
+        ax.set_title(ps.get("title"))
+        ax.set_xlabel(ps.get("xlabel"))
+        ax.set_ylabel(ps.get("ylabel"))
+        #ax.set_xticklabels([f"{c:.2f}" for c in hcoords])
+        #ax.set_yticklabels([f"{c:.2f}" for c in vcoords])
+        #ax.set_ylim(extent[0], extent[1])
+        #ax.set_xlim(extent[2], extent[3])
+        if show:
+            plt.show()
+        if not fig_path is None:
+            fig.savefig(fig_path.as_posix(), bbox_inches="tight")
+
+    def geo_scatter(self, clabel, xlabel="lat", ylabel="lon",
+                    bounds:tuple=None):
+        """ """
+        ax = plt.axes(projection=ccrs.PlateCarree())
+        fig = plt.gcf()
+        if bounds is None:
+            bounds = [
+                np.amin(self.data(ylabel)),
+                np.amax(self.data(ylabel)),
+                np.amin(self.data(xlabel)),
+                np.amax(self.data(xlabel)),
+                ]
+        ax.set_extent(bounds)
+
+        ax.add_feature(cfeature.LAND)
+        ax.add_feature(cfeature.LAKES)
+        ax.add_feature(cfeature.RIVERS)
+        ax.coastlines()
+
+        scat = ax.scatter(self.data(ylabel),self.data(xlabel),
+                          c=self.data(clabel),
+                          transform=ccrs.PlateCarree(), zorder=100)
+        fig.colorbar(scat)
+
+        plt.show()
+        plt.clf()
+
+    def trend(self, xlabel, ylabel):
+        """
+        Returns the linear regression slope, intercept, and Pearson coefficient
+        of the 2 provided dataset labels.
+        """
+        result = linregress(self.data(xlabel), self.data(ylabel))
+        return (result.slope, result.intercept, result.rvalue)
+
+def get_ocod_mask(ceres):
+    """
+    Returns the mask for oceanic cloud optical depth
+    """
+    m_sdcod = ceres.data("l1_sdcod") < 5
+    m_aopct_ub = ceres.data("aer_ocean_pct") < 2
+
 if __name__=="__main__":
-    #ceres_path = Path(
-    #    "data/CERES_SSF_Terra-XTRK_Edition4A_Subset_2021082100-2021082223.nc")
-    ceres_path = Path(
-        "data/CERES_SSF_Terra-XTRK_Edition4A_Subset_2021081805-2021081820.nc")
     #mod09_path = Path("data/MOD09.A2021232.1900.061.2021234021126.hdf")
     #mod09_path = Path("data/MOD09.A2021232.1855.061.2021234021011.hdf")
     #mod09_path = Path("data/MOD09.A2021230.1915.061.2021232021510.hdf")
+    #ceres_path = Path(
+    #    "data/CERES_SSF_Terra-XTRK_Edition4A_Subset_2021082100-2021082223.nc")
+
+    ceres_path = Path(
+        "data/CERES_SSF_Terra-XTRK_Edition4A_Subset_2021081805-2021081820.nc")
     mod09_path = Path("data/MOD09.A2021230.1910.061.2021232021325.hdf")
 
     labels, data = parse_ceres(ceres_path)
@@ -137,14 +282,36 @@ if __name__=="__main__":
     data = list(map(lambda X: X[second_pass], data))
     ceres = FG1D(labels, data)
 
-    for l in ceres.labels:
-        print(l, ceres.data(l))
+    #mask = m_sdcod & m_aopct_ub & m_aopct_lb ## for l1 cloud COD
+    mask = m_sdcod & m_aopct_lb & m_aopct_lb ## for small oceanic AOD
+
+    ceres = ceres.mask(mask)
+
+    exit(0)
+
+    ceres.scatter(
+            #"l1_sdcod", "swflux", "lwflux",
+            "l1_cod", "swflux", "lwflux",
+            #"lat", "lon", "l1_cod",
+            get_trend=True,
+            )
+    ceres.heatmap(
+            #"l1_cod", "swflux",
+            "aod_ocean_small", "swflux",
+            xbins=64, ybins=64, get_trend=True,
+            plot_spec={
+                })
+    #ceres.geo_scatter(
+    #        clabel="swflux",
+    #        bounds=[-135, -120, 30, 45],
+    #        )
+    exit(0)
 
     plt.scatter(ceres.data("lat"), ceres.data("lon"),
-                #c=ceres.data("l1_cod"), cmap="jet")
+                c=ceres.data("l1_cod"), cmap="jet")
                 #c=ceres.data("l1_sdcod"), cmap="jet")
                 #c=ceres.data("l2_cod"), cmap="jet")
-                c=ceres.data("l2_sdcod"), cmap="jet")
+                #c=ceres.data("l2_sdcod"), cmap="jet")
                 #c=ceres.data("aer_ocean_pct"), cmap="jet")
                 #c=ceres.data("aer_db_pct"), cmap="jet")
                 #c=ceres.data("aod_ocean_small"), cmap="jet")
