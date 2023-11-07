@@ -45,11 +45,6 @@ def get_world_latlon(res=.1):
                        np.arange(-180,180,res),
                        indexing="ij")
 
-def contour_plot(hcoords, vcoords, data, bins):
-    plt.contourf(hcoords, vcoords, data, bins, cmap="jet")
-    plt.colorbar()
-    plt.show()
-
 def print_ceres(ceres_nc:Path):
     ds = nc.Dataset(ceres_nc, 'r')
     data = []
@@ -120,8 +115,8 @@ def parse_ceres(ceres_nc:Path):
     ds = nc.Dataset(ceres_nc, 'r')
     data = []
     labels = []
-    unq_ids = np.ma.unique(ds.variables["Surface_type_index"][:])
-    print(f"Valid IDs: {unq_ids}")
+    #unq_ids = np.ma.unique(ds.variables["Surface_type_index"][:])
+    #print(f"Valid IDs: {unq_ids}")
     for ncl,l in label_mapping:
         X = ds.variables[ncl][:]
         if not type(l) is str:
@@ -157,7 +152,7 @@ class FG1D:
         return FG1D(self.labels, [X[mask] for X in self._data])
 
     def scatter(self, xlabel, ylabel, clabel=None, get_trend=False, show=True,
-                fig_path:Path=None, plot_spec:dict={}):
+                fig_path:Path=None, plot_spec:dict={}, tres=500):
         """
         Make a scatter plot of the 2 provided datasets stored in this FG1D,
         optionally coloring points by a third dataset
@@ -177,16 +172,18 @@ class FG1D:
         fig, ax = plt.subplots()
         if get_trend:
             slope,intc,rval = self.trend(X, Y)
-            Tx = np.copy(X)
+            #Tx = np.copy(X)
+            Tx = np.linspace(np.amin(X), np.amax(X), tres)
             Ty = Tx*slope + intc
-            ax.scatter(
-            #ax.plot(
+            #ax.scatter(
+            ax.plot(
                     Tx, Ty,
                     linewidth=ps.get("trend_width"),
                     label=f"y={slope:.3f}x+{intc:.3f}\n$R^2$ = {rval**2:.3f}",
                     color=ps.get("trend_color"),
-                    s=ps.get("marker_size")+30,
-                    marker="2",
+                    #s=ps.get("marker_size")+30,
+                    #s=ps.get("marker_size")+30,
+                    #marker="2",
                     zorder=100,
                     )
             ax.legend()
@@ -319,15 +316,67 @@ class FG1D:
     @staticmethod
     def mutual_valid(X, Y):
         valid = np.isfinite(X.filled(np.nan)) & np.isfinite(Y.filled(np.nan))
-        print(enh.array_stat(X[valid]))
-        print(enh.array_stat(Y[valid]))
+        #print(enh.array_stat(X[valid]))
+        #print(enh.array_stat(Y[valid]))
         return X[valid], Y[valid]
 
-def get_ocod_mask(ceres):
+def interp_modis(M, C, lbl="swflux"):
     """
-    Returns the mask for oceanic cloud optical depth
+    Load a L2 (atmospherically corrected) file with geolocation, make a plot
+    with the provided label
     """
-    pass
+    #print(fg.shape, fg.labels)
+    lon = C.data("lon")
+    lat = C.data("lat")
+    req_data = C.data(lbl)
+
+    """ NN-Interpolate shortwave fluxes onto the 1km grid """
+    interp = NearestNDInterpolator(list(zip(lon,lat)),req_data)
+    regridded = interp(M.data("longitude"), M.data("latitude"))
+    plt.pcolormesh(M.data("longitude"), M.data("latitude"), regridded)
+    plt.show()
+    return None
+
+def load_modis(mod09_path, vrange=None, hrange=None):
+    tmp_fg = load_modis_l2(
+            mod09_path=mod09_path,
+            #bands=["R1_500", "R2_500", "R3_500", "R4_500",
+            #       "R5_500", "R6_500", "R7_500", "latitude", "longitude"]
+            bands=["R1_1000", "R2_1000", "R3_1000", "R4_1000",
+                   "R5_1000", "R6_1000", "R7_1000", "latitude", "longitude"]
+            )
+    if vrange:
+        tmp_fg = tmp_fg.subgrid(vrange=vrange)
+    if hrange:
+        tmp_fg = tmp_fg.subgrid(hrange=hrange)
+    return tmp_fg
+
+def contour_plot(hcoords, vcoords, data, bins, plot_spec={}):
+    ps = {"xlabel":"latitude", "ylabel":"longitude", "marker_size":4,
+          "cmap":"nipy_spectral", "text_size":12, "title":"",
+          "norm":"linear","figsize":(12,12)}
+    ps.update(plot_spec)
+    fig,ax = plt.subplots()
+    ax.set_title(ps.get("title"))
+    ax.set_xlabel(ps.get("xlabel"))
+    ax.set_ylabel(ps.get("ylabel"))
+
+    cont = ax.contourf(hcoords, vcoords, data, bins, cmap=ps.get("cmap"))
+    fig.colorbar(cont)
+    plt.show()
+
+def interp_ceres(C, lbl="swflux", plot_spec={}):
+    """ Interpolate the onto a regular grid """
+    clat = np.arange(30,45,.1)
+    clon = np.arange(-135,-120,.1)
+    lat = C.data("lat")
+    lon = C.data("lon")
+    d = C.data(lbl)
+    regrid = griddata((lat, lon), d, (clat[:,None], clon[None,:]),
+                     method="nearest")
+    contour_plot(clon,clat,regrid, 50, plot_spec=plot_spec)
+    return None
+
 
 if __name__=="__main__":
     #mod09_path = Path("data/MOD09.A2021232.1900.061.2021234021126.hdf")
@@ -335,27 +384,41 @@ if __name__=="__main__":
     #mod09_path = Path("data/MOD09.A2021230.1915.061.2021232021510.hdf")
     data_dir = Path("data")
     mod09_path = data_dir.joinpath(Path(
-        "data/MOD09.A2021230.1910.061.2021232021325.hdf"
+        "MOD09.A2021230.1910.061.2021232021325.hdf"
         ))
     aqua_path = data_dir.joinpath(Path(
         "CERES_SSF_Aqua-XTRK_Edition4A_Subset_2021081509-2021082522.nc"))
     terra_path = data_dir.joinpath(Path(
-        #"CERES_SSF_Terra-XTRK_Edition4A_Subset_2021081805-2021081820.nc"
-        "CERES_SSF_Terra-XTRK_Edition4A_Subset_2021081505-2021082520.nc"
+        "CERES_SSF_Terra-XTRK_Edition4A_Subset_2021081805-2021081820.nc"
+        #"CERES_SSF_Terra-XTRK_Edition4A_Subset_2021081505-2021082520.nc"
         ))
 
+    """ Load MODIS and CERES granules """
     labels, adata = parse_ceres(aqua_path)
     _, tdata = parse_ceres(terra_path)
 
     data = list(map(np.concatenate, zip(tdata, adata)))
+    #data = tdata
     #print_ceres(aqua_path)
 
     ceres = FG1D(labels, data)
+    ## Only allow daytime swaths
+    ceres = ceres.mask(ceres.data("sza")<85)
+
+    '''
+    """ Load a MODIS granule for whatever """
+    #modis = load_modis(mod09_path, vrange=(400,1400), hrange=(200,1100))
+    '''
+
+    '''
+    """ Interpolate the CERES footprints onto a regular grid """
+    interp_ceres(ceres, lbl="lwflux", plot_spec={
+        "title":"LW Radiative Flux ($W\,m^{-2}$)"})
+    '''
+
     print(f"Total data points: {ceres.size}")
 
-    ## Time mask
-    ceres = ceres.mask(ceres.data("sza")<75)
-
+    """ Define some useful mask properties with thresholds """
     ## Cloud property masks
     m_sdcod_ub = ceres.data("l1_sdcod") < 10
     m_nocloud = ceres.data("nocld") > 75
@@ -372,86 +435,203 @@ if __name__=="__main__":
     m_uniform = ceres.data("pct_s1") > 80
     m_water = ceres.data("id_s1") == 17
     m_nowater =  np.logical_not(m_water) & (ceres.data("id_s2") != 17)
-    m_evergreen = (ceres.data("id_s1") == 1) | (ceres.data("id_s1") == 2)
-    m_deciduous = (ceres.data("id_s1") == 3) | (ceres.data("id_s1") == 4)
-    m_forest = m_evergreen | m_deciduous | ceres.data("id_s1") == 5
-    m_shrub = (ceres.data("id_s1") == 6) | (ceres.data("id_s1") == 7)
-    m_savanna = (ceres.data("id_s1") == 8) | (ceres.data("id_s1") == 9) \
-            | (ceres.data("id_s1") == 10)
-    m_crop = (ceres.data("id_s1") == 12) | (ceres.data("id_s1") == 14)
-    m_bare = ceres.data("id_s1") == 16
-    m_urban = ceres.data("id_s1") == 13
     ## Flux masks
     m_swf = ceres.data("swflux") < 10000
+    m_lwf = ceres.data("lwflux") < 10000
     m_laod = ceres.data("aod_land") < 100
 
-    ## OLD
-    #mask = m_aopct_lb & m_aocfrac_ub & m_water & m_uniform & m_nocloud
-
-    ## oceanic AOD
-    #mask = m_aopct_lb & m_aocfrac_ub
     ## l1 cloud COD
-    #mask = m_sdcod_ub & m_aopct_ub &
+    cod_mask = m_sdcod_ub & m_aopct_ub & m_swf & m_lwf
+    ocod_mask = cod_mask & m_water
     ## Ocean AOD
-    #mask = m_clr_lb & m_aopct_lb & m_water
+    oaod_mask = m_clr_lb & m_aopct_lb & m_water
     ## Land AOD
-    #mask = m_alpct_lb & m_alcfrac_ub & m_nowater & m_uniform & m_swf
-    mask = m_clr_lb & m_alpct_lb & m_nowater & m_uniform & m_laod
-    #mask = mask & m_evergreen
+    laod_mask = m_clr_lb & m_alpct_lb & m_nowater & m_uniform & m_laod
 
-    #ceres = ceres.mask(m_nocloud & m_evergreen)
+    param_sets = [
+            ("l1_cod", "swflux", "sza"),
+            ("l1_cod", "lwflux", "sza"),
+            ("aod_land", "lwflux", "sza"),
+            ("aod_ocean_small", "swflux", "sza"),
+            ("aod_ocean_small", "lwflux", "sza"),
+            ]
+
+    #'''
+    #tmpc = ceres.mask(oaod_mask)
+    tmpc = ceres.mask(ocod_mask)
+    tmpc.scatter(
+            #"aod_ocean", "swflux", "sza",
+            "l1_cod", "swflux", "sza",
+            get_trend=True,
+            show=False,
+            #fig_path=Path(f"figures/oaod_swf_.png"),
+            fig_path=Path(f"figures/ocod_swf_.png"),
+            plot_spec={
+                #"title":"SW Flux vs AOD Over Ocean",
+                "title":"SW Flux vs COD Over Ocean",
+                #"xlabel":"Aerosol Optical Depth",
+                "xlabel":"Cloud Optical Depth",
+                "ylabel":"Reflected Shortwave Flux",
+                "clabel":"Solar Zenith",
+                "cmap": "nipy_spectral_r",
+                "trend_width":8,
+                "marker_size":80,
+                "norm":"linear",
+                #"logx":True,
+                "logx":False,
+                "text_size":26,
+                "figsize":(24,12),
+                })
+    tmpc.scatter(
+            #"aod_ocean", "lwflux", "sza",
+            "l1_cod", "lwflux", "sza",
+            get_trend=True,
+            show=False,
+            #fig_path=Path(f"figures/oaod_lwf.png"),
+            fig_path=Path(f"figures/ocod_lwf.png"),
+            plot_spec={
+                #"title":"LW Flux vs AOD Over Ocean",
+                "title":"LW Flux vs COD Over Ocean",
+                #"xlabel":"Aerosol Optical Depth",
+                "xlabel":"Cloud Optical Depth",
+                "ylabel":"Outgoing Longwave Flux",
+                "clabel":"Solar Zenith",
+                "cmap": "nipy_spectral_r",
+                "trend_width":8,
+                "marker_size":80,
+                "norm":"linear",
+                #"logx":True,
+                "logx":False,
+                "text_size":26,
+                "figsize":(24,12),
+                })
+    #'''
+
+    '''
+    """ Geographic scatterplot """
+    ceres.geo_scatter(
+            #clabel="aod_ocean",
+            #clabel="aod_land",
+            clabel="swflux",
+            #clabel="aod_ocean_small",
+            #clabel="aer_land_cfrac",
+            #clabel="aer_ocean_cfrac",
+            #clabel="id_s1",
+            bounds=[-135, -120, 30, 45],
+            #fig_path=Path("figures/oaod_geoplot.png"),
+            fig_path=Path(f"figures/laod_geoplot_swflux.png"),
+            show=True,
+            plot_spec={
+                "title":"SW Radiative Flux",
+                "cmap":"nipy_spectral_r",
+                #"norm":"log",
+                "norm":"linear",
+                "figsize":(16,12),
+                })
+    '''
+
+
+    '''
+    """ Plot class-wise shortwave and longwave influence of AOD over land """
+    class SfcType:
+        def __init__(self, name, ids):
+            self.name = name
+            self.ids = ids
+        @property
+        def fstr(self):
+            return self.name.lower().replace(" ","-")
+        def mask(self, C):
+            I = np.copy(C.data("id_s1"))
+            mask = np.full_like(I, False)
+            for v in self.ids:
+                mask = np.logical_or(mask, (I == v))
+            return np.copy(mask)
+
+    stypes = [
+            SfcType("Evergreen", (1, 2)),
+            SfcType("Deciduous", (3,4)),
+            SfcType("All Forest", (1,2,3,4,5)),
+            SfcType("Shrub",(6,7)),
+            SfcType("Savanna",(8,9,10)),
+            SfcType("Crop",(12,14)),
+            SfcType("Bare", (16,)),
+            SfcType("Urban", (13,)),
+            ]
+
+    scat_plot_spec = {
+            #"xlabel":"Aerosol Optical Depth",
+            "xlabel":"Cloud Optical Depth",
+            "clabel":"Solar Zenith",
+            "cmap": "nipy_spectral_r",
+            "trend_width":8,
+            "marker_size":80,
+            "norm":"linear",
+            #"logx":True,
+            "logx":False,
+            "text_size":26,
+            "figsize":(24,12),
+            }
+
+    for st in stypes:
+        try:
+            #tmp_mask = st.mask(ceres) & laod_mask
+            tmp_mask = st.mask(ceres) & cod_mask
+            print(f"{st.name} Nonzero: {np.count_nonzero(tmp_mask)}")
+            tmpc = ceres.mask(tmp_mask)
+
+            scat_plot_spec["title"] = \
+                    f"SW Flux vs COD Over Land ({st.name})"
+                    #f"SW Smoke Aerosol Effect Over Land ({st.name})"
+            scat_plot_spec["ylabel"] = "Reflected Shortwave Flux"
+            tmpc.scatter(
+                    #"aod_land", "swflux", "sza",
+                    "l1_cod", "swflux", "sza",
+                    get_trend=True,
+                    show=False,
+                    #fig_path=Path(f"figures/laod_swf_{st.fstr}.png"),
+                    fig_path=Path(f"figures/lcod_swf_{st.fstr}.png"),
+                    plot_spec=scat_plot_spec
+                    )
+            scat_plot_spec["title"] = \
+                    f"LW Flux vs COD Over Land ({st.name})"
+                    #f"LW Smoke Aerosol Effect Over Land ({st.name})"
+            scat_plot_spec["ylabel"] = "Outgoing Longwave Flux"
+            tmpc.scatter(
+                    #"aod_land", "lwflux", "sza",
+                    "l1_cod", "lwflux", "sza",
+                    get_trend=True,
+                    show=False,
+                    #fig_path=Path(f"figures/laod_lwf_{st.fstr}.png"),
+                    fig_path=Path(f"figures/lcod_lwf_{st.fstr}.png"),
+                    plot_spec=scat_plot_spec
+                    )
+        except ValueError as e:
+            continue
+    '''
+    exit(0)
+
     ceres = ceres.mask(mask)
-
     ceres.scatter(
-            #"l1_cod", "swflux", "lwflux",
-            #"l1_cod", "lwflux", "l1_sdcod",
-
-            "aod_land", "swflux", "sza",
-            #"aod_land", "lwflux", "sza",
-
-            #"aod_ocean_small", "swflux", "sza",
-            #"aod_ocean_small", "lwflux", "sza",
-
-            #"pct_s1", "swflux", "id_s1",
-
-            #"lat", "lon", "l1_cod",
-            #"lat", "lon", "l1_cod",
             get_trend=True,
             show=False,
             #fig_path=Path("figures/oaod_lwf.png"),
-            fig_path=Path("figures/laod_swf.png"),
+            fig_path=Path(f"figures/laod_swf_{filestr}.png"),
             plot_spec={
-                "title":"SW Smoke Aerosol Effect Over Land",
+                "title":"SW Smoke Aerosol Effect Over Land"+append,
                 "xlabel":"Aerosol Optical Depth",
                 "ylabel":"Reflected Shortwave Flux",
                 #"ylabel":"Outgoing LW Flux",
                 "clabel":"Solar Zenith",
                 #"cmap": "tab10",
                 "cmap": "nipy_spectral_r",
+                "trend_width":8,
                 "marker_size":80,
                 "norm":"linear",
                 "logx":True,
                 "text_size":26,
                 "figsize":(24,12),
                 })
-
     #'''
-    ceres.geo_scatter(
-            #clabel="swflux",
-            clabel="aod_ocean_small",
-            #clabel="aer_land_cfrac",
-            #clabel="aer_ocean_cfrac",
-            #clabel="aod_ocean",
-            #clabel="id_s1",
-            bounds=[-135, -120, 30, 45],
-            #fig_path=Path("figures/oaod_geoplot.png"),
-            fig_path=Path("figures/aod_geoplot.png"),
-            show=False,
-            plot_spec={
-                "title":"Aerosol Optical Depth ($0.55\mu m$)",
-                "cmap":"nipy_spectral_r",
-                "norm":"log",
-                })
     #'''
     exit(0)
 
@@ -484,34 +664,3 @@ if __name__=="__main__":
 
     exit(0)
 
-    '''
-    """ Interpolate onto a regular grid """
-    clat = np.arange(30,45,.1)
-    clon = np.arange(-135,-120,.1)
-    gflux = griddata((lat, lon), swflux, (clat[:,None], clon[None,:]),
-                     method="nearest")
-    contour_plot(clon,clat,gflux, 50)
-    '''
-
-    """ Load a L2 (atmospherically corrected) file with geolocation """
-    fg = load_modis_l2(
-            mod09_path=mod09_path,
-            #bands=["R1_500", "R2_500", "R3_500", "R4_500",
-            #       "R5_500", "R6_500", "R7_500", "latitude", "longitude"]
-            bands=["R1_1000", "R2_1000", "R3_1000", "R4_1000",
-                   "R5_1000", "R6_1000", "R7_1000", "latitude", "longitude"]
-            )
-    fg = fg.subgrid(vrange=(400,1400), hrange=(200, 1100))
-    print(fg.shape, fg.labels)
-
-    '''
-    """ Get an RGB """
-    norm = "norm1 gaussnorm"
-    gt.quick_render(fg.get_rgb(norm+"R1_1000", norm+"R4_1000", norm+"R3_1000"))
-    '''
-
-    """ NN-Interpolate shortwave fluxes onto the 1km grid """
-    interp = NearestNDInterpolator(list(zip(lon,lat)),swflux)
-    gflux = interp(fg.data("longitude"), fg.data("latitude"))
-    plt.pcolormesh(fg.data("longitude"), fg.data("latitude"), gflux)
-    plt.show()
