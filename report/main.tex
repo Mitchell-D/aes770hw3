@@ -70,11 +70,12 @@
 \titleformat{\subsection}
   {\normalfont\fontsize{12}{15}\bfseries}{\thesubsection}{1em}{}
 
-\title{AES 770 Satellite Remote Sensing II
+\title{\vspace{-3em}AES 770 Satellite Remote Sensing II Project III
 
 Smoke and Cloud Radiative Forcing}
 
 \author{Mitchell Dodson}
+
 \date{November 7, 2023}
 
 \begin{document}
@@ -86,7 +87,7 @@ Smoke and Cloud Radiative Forcing}
 \begin{figure}[h!]
     \centering
     \includegraphics[width=.5\paperwidth]{figs/cover.png}
-    \caption{GOES-17 ABI Truecolor RGB of the Region of Interest, captured on August 19, 2021 at 2137z. The scene shows widespread stratocumulus cover as well as thick wildfire smoke over the ocean, which is typical for the observations used in this report.}
+    \caption{GOES-17 ABI Truecolor RGB of the Region of Interest, captured on August 18, 2021 at 1910z. The scene shows widespread stratocumulus cover as well as thick wildfire smoke over the ocean, which is typical for the observations used in this report.}
     \label{cover}
 \end{figure}
 
@@ -94,7 +95,7 @@ Smoke and Cloud Radiative Forcing}
 
 \section{Abstract}
 
-In this report, I provide an assessment of the Cloud Radiative Forcing (CRF) and Aerosol Radiative Forcing (ARF) in both the longwave and shortwave spectral ranges using L2 Single-Scan Footprint (SSF) data from the Clouds and Earth Radiant Energy System (CERES) instrument, as well as co-located imager data from the Moderate Resolution Imaging Spectroradiometer (MODIS) instrument on the same satellite platforms, which are included with the SSF dataset. I focus on a Region of Interest (RoI) spanning $135^\circ W$ to $120^\circ W$ and $30^\circ N$ to $45^\circ N$, and the data I include consists of daytime overpasses from both the Terra and Aqua satellites between August 15 and August 25, 2021.
+In this report, I provide an assessment of the Cloud Radiative Forcing (CRF) and Aerosol Radiative Forcing (ARF) in both the longwave and shortwave spectral ranges using L2 Single-Scan Footprint (SSF) data from the Clouds and Earth Radiant Energy System (CERES) instrument, which includes imager data from the Moderate Resolution Imaging Spectroradiometer (MODIS) instrument on the same satellite platforms. I focus on a Region of Interest (RoI) spanning $135^\circ W$ to $120^\circ W$ and $30^\circ N$ to $45^\circ N$, and the data I include consists of daytime overpasses from both the Terra and Aqua satellites between August 15 and August 25, 2021. Over land, the cloud forcing is shown to be about $CRF=-50\,\si{W.m^{-2}}$, or about $-11\,\si{W.m^{-2}}$ per unit cloud optical depth (COD), and the total aerosol forcing is approximately $ARF=-10\,\si{W.m^{-2}}$, and about the same amount per unit aerosol optical depth (AOD). The forcing effects over the ocean are demonstrated to be much more substantial, with $CRF=-190\,\si{W.m^{-2}}$, or $-23\,\si{W.m^{-2}}$ per unit COD, and $ARF=-19\,\si{W.m^{-2}}$, or $-76\,\si{W.m^{-2}}$ per unit AOD.
 
 
 %\begin{multicols}{2}
@@ -114,7 +115,7 @@ In this report, I provide an assessment of the Cloud Radiative Forcing (CRF) and
         \includegraphics[width=.24\linewidth]{figs/abi_dcp_20210823-2113.png}
         \includegraphics[width=.24\linewidth]{figs/abi_dcp_20210825-1918.png}
     \end{center}
-    \caption{GOES ABI Day cloud Phase RGBs captured at a subset of the Terra and Aqua overpass times used in this report, showing the progression of the wildfires from August 18 (top left) to August 25 (bottom right). Light blue indicates warm water clouds, green indicates fine and uniform smoke particles, and red indicates cirrus cloud cover.}
+    \caption{GOES ABI Day cloud Phase RGBs captured at a subset of the Terra and Aqua overpass times used in this report, showing the extent of wildfire smoke and prevalance of marine stratocumulus clouds between August 18 (top left) to August 25 (bottom right). Light blue indicates warm water clouds, green hues suggest fine and uniform smoke particles, and red indicates cirrus cloud cover.}
 \end{figure}
 
 
@@ -137,7 +138,7 @@ In this report, I provide an assessment of the Cloud Radiative Forcing (CRF) and
 
     In the 1978, NASA launched the Nimbus 7 satellite carrying the first generation of the Earth's Radiation Budget (ERB) instrument, which enabled the development of a new methodology for retrieving accurate outgoing radiation estimates. This new strategy involves the co-location of narrow-FOV Advanced Very High Resolution Radiospectrometer (AVHRR) data with wide-FOV ERB data, and subsequently the use of angular distribution models (ADMs) to characterize surfaces and estimate the full-sky radiative flux of a surface from a radiance observation (with a particular Sun/surface/satellite geometry) \cite{taylor_reflectance_1984}\cite{jacobowitz_earth_1983}. The success of this mission was soon followed by the launch of 3 similar instruments, which flew aboard the NOAA-9, NOAA-10, and ERBS satellite platforms, which collectively form the Earth's Radiation Budget Experiment (ERBE) constellation \cite{barkstrom_earth_1984}.
 
-    The advances in observational capacity as well as analysis techniques following the ERBE experiment facilitated the development of regional and seasonal estimates of Earth's radiation budget, which substantially enhanced understanding of the shortwave and longwave global energy balance \cite{breon_global_1994}. In particular, the juxtaposition of data from imagers having finer spatial and spectral resolutions enabled the scenes observed by broad-band instruments to be spectrally classified into surface types with common characteristics. This advancement led to the development of surface-specific bidirectional models (ADMs) for more accurate flux retrievals, as well as derivations of the radiative forcing by clouds as opposed to clear-sky \cite{ramanathan_cloud-radiative_1989}\cite{smith_inversion_1986}. The improved observations led to an updated average planetary albedo estimate of $31\%$, and an outgoing longwave radiation average of $235\,\si{W.m^{-2}}$ \cite{kiehl_earth_1997}.
+    The advances in observational capacity as well as analysis techniques following the ERBE experiment facilitated the development of regional and seasonal estimates of Earth's radiation budget, which substantially enhanced understanding of the shortwave and longwave global energy balance \cite{breon_global_1994}. In particular, the juxtaposition of data from imagers having finer spatial and spectral resolutions enabled the scenes observed by broad-band instruments to be spectrally classified into surface types with common characteristics. This advancement led to the development of surface-specific bidirectional models (ADMs) for more accurate flux retrievals, as well as derivations of the radiative forcing by clouds as opposed to clear-sky \cite{ramanathan_cloud-radiative_1989}\cite{smith_inversion_1986}. The improved observations led to an updated average planetary albedo estimate of $31\%$, and an outgoing longwave radiation average of $235\,\si{W.m^{-2}}$ \cite{kiehl_earths_1997}.
 
     \subsection{Clouds and the Earth's Radiant Energy System}
 
@@ -217,20 +218,20 @@ In this report, I provide an assessment of the Cloud Radiative Forcing (CRF) and
 
     The climate forcing attributable to an atmospheric component such as clouds or aerosols is a function of the material's influence on incoming shortwave solar radiation, as well as its effect on emitted longwave radiation. As such, in the most general form, the net radiative heating of an atmospheric column can be expressed in terms of the difference between the heat from absorbed shortwave radiation within the column $H_{SW}$ and the column's outgoing longwave flux emission $F_{LW}$, as demonstrated by Equation \ref{rad-heat}.
 
-    Since clouds and aerosols are transient phenomena with radiation effects that depend on other properties such as optical depth, single scatter albedo, and effective radius, it's often helpful to express their forcing effect in terms of the variation in the net heating of an atmospheric column containing the cloud or aerosol from that of the same atmospheric column without the cloud or aerosol. Given a clear-sky heating rate $H$ as shown above, and the heating rate given the presence of a cloud $H^{(cld)}$, the total climate forcing as a consequence of the cloud (i.e. cloud radiative forcing) is determined to be $CRF = H^{(cld)} - H$. Similarly, given the heating rate of an aerosol-laden atmospheric column $H^{(aer)}$, the aerosol radiative forcing is $ARF = H^{(aer)} - H$.
+    Since clouds and aerosols are transient phenomena with radiation effects that depend on other properties such as optical depth, single scatter albedo, and effective radius, it's often helpful to express their forcing effect in terms of the variation in the net outgoing flux of an atmospheric column containing the cloud or aerosol from that of the same atmospheric column without the cloud or aerosol. Given a clear-sky outgoing flux $F$ as shown above, and the flux given the presence of a cloud $F^{(cld)}$, the total climate forcing as a consequence of the cloud (i.e. cloud radiative forcing) is determined to be $CRF = F - F^{(cld)}$. Similarly, given the outgoing flux of an aerosol-laden atmospheric column $F^{(aer)}$, the aerosol radiative forcing is $ARF = F - F^{(aer)}$.
 
-    The above expressions for CRF and ARF are structured such that positive values are associated with a net heating effect from clouds or aerosols, and negative values indicate net cooling within the atmosphere. It's also critical to note that the clear-sky heating $H$ in both cases is highly dependent on the incident surface, and even the relative heating rates in the presence of clouds or aerosols can depend on the surface type in a nonlinear fashion due to feedback mechanisms. Therefore in this project I calculate the atmospheric forcing effects of clouds and aerosols independently per surface type represented observed within the RoI.
+    The above expressions for CRF and ARF are structured such that positive values are associated with a net heating effect from clouds or aerosols, and negative values indicate net cooling within the atmosphere. It's also critical to note that the clear-sky flux $F$ in both cases is highly dependent on the incident surface, and even the relative heating rates in the presence of clouds or aerosols can depend on the surface type in a nonlinear fashion due to feedback mechanisms. Therefore in this project I calculate the atmospheric forcing effects of clouds and aerosols independently per surface type observed within the RoI.
 
     \begin{equation}\label{mycrf}
         \begin{split}
-            CRF
-            &= H^{(cld)} - H = (F_{SW}+F_{LW}) - (F_{SW}^{(cld)} + F_{LW}^{(cld)}) \\
-            &\approx (F_{SW}+F_{LW}) - \left(F_{SW} + \frac{dF_{SW}}{d\tau}\cdot \tau + F_{LW} + \frac{dF_{LW}}{d\tau} \cdot \tau\right) \\
+            CRF &=  F - F^{(cld)} = (F_{SW}+F_{LW}) - (F_{SW}^{(cld)} + F_{LW}^{(cld)}) \\
+            CRF &\approx (F_{SW}+F_{LW}) - \left(F_{SW} + \frac{dF_{SW}}{d\tau}\cdot \tau + F_{LW} + \frac{dF_{LW}}{d\tau} \cdot \tau\right) \\
             &= -\tau \cdot \left(\frac{dF_{SW}}{d\tau} + \frac{dF_{LW}}{d\tau}\right)\\
+            \frac{dCRF}{d\tau} &= \frac{dF_{SW}}{d\tau} + \frac{dF_{LW}}{d\tau}
         \end{split}
     \end{equation}
 
-    Since CERES directly observes outgoing fluxes in the shortwave and longwave spectrum, and because the scene includes clouds and aerosols with a wide variety of properties that influence their radiative characteristics, a more appropriate expression for the measured radiative forcing is in terms of the change in shortwave and longwave flux with respect to a determining property. For example, Equation \ref{mycrf}
+    Since CERES directly observes outgoing fluxes in the shortwave and longwave spectrum, and because the scene includes clouds and aerosols with a wide variety of properties that influence their radiative characteristics, a more appropriate expression for the measured radiative forcing is in terms of the change in shortwave and longwave flux with respect to a determining property. For example, instead of modeling CRF in terms of cloudy and clear-sky heating rates, Equation \ref{mycrf} employs shortwave and longwave components of both cloudy and clear-sky outgoing fluxes, assumes a linear relationship between COD ($\tau$) and the outgoing flux in each waveband, and cancels out the clear-sky fluxes to obtain CRF as a function of the rate of change of $F_{SW}$ and $F_{LW}$ with respect to COD. The same principle applies to aerosol radiative forcing. For the purposes of this project, I will maintain the admittedly weak assumption of this linear relationship, and calculate CRF and ARF in terms of the first-order rates of change with respect to COD and AOD.
 
     \section{Cloud and Aerosol Forcing Results}
 
@@ -241,7 +242,6 @@ In this report, I provide an assessment of the Cloud Radiative Forcing (CRF) and
     The following constraints were imposed on the footprints used in each flux forcing calculation, based on the auxilliary data provided alongside the SSF flux data, as defined in (Loeb, 2018) \cite{loeb_503_2018}.
 
     \vspace{1em}
-
     \noindent
     \textbf{Cloud Optical Depth Constraints}
     \vspace{-1em}
@@ -280,22 +280,22 @@ In this report, I provide an assessment of the Cloud Radiative Forcing (CRF) and
 
      Clouds have a substantial influence on the radiation budget due to their high reflectivity as well as emissivity. In the shortwave range, enhanced reflection of insolation causes a general cooling effect that is most prominent in the mid-latitude summer, and over bodies of water \cite{harrison_seasonal_1990}. This effect is clearly demonstrated by the broad-band shortwave flux in Figure \ref{flux-interp}, which shows that outgoing shortwave radiation over the highest-reflectivity water clouds exceeds that of the ocean surface by as much as $540\,\si{W.m^{-2}}$.
 
-    The longwave impact of clouds is less prominent for liquid water clouds over the ocean since both surfaces have a comparable temperature and emissivity, however over land (in the top right of the second image in Figure \ref{flux-interp}), there is a stark depression in outgoing longwave radiation (OLR) associated with low-level water clouds. Furthermore, the thin cirrus clouds associated with red hues in the center-right of Figure \ref{cover} correspond to a decrease in OLR over the same area in Figure \ref{flux-interp}. Both of cases are indicative of the greenhouse effect of clouds which result in a net warming effect that is generally less prominent than the shortwave forcing \cite{ramanathan_cloud-radiative_1989}.
+    The longwave impact of clouds is less prominent for liquid water clouds over the ocean since in the observed scenarios both surfaces have a comparable temperature and emissivity, however over land (in the top right of the second image in Figure \ref{flux-interp}), there are clear depressions in outgoing longwave radiation (OLR) associated with low-level water clouds. Furthermore, the thin cirrus clouds associated with red hues in the center-right of the first image in Figure \ref{fire-progression} correspond to a decrease in OLR over the same area in Figure \ref{flux-interp}. Both of cases are indicative of the infrared greenhouse effect of clouds which have a net warming effect that is generally less prominent than the SW forcing \cite{ramanathan_cloud-radiative_1989}.
 
-\begin{table}[h!]\label{}
-    \centering
-    \begin{tabular}{c | c c | c c | c}
-        Surface & $F_{SW} $ & $F_{LW}$ & $F_{SW}^{(cld)}(\tau = 1)$ & $F_{LW}^{(cld)}(\tau = 1)$ & $CRF(\tau = 1)$ \\
-        \hline
-        Ocean & 112.606 & 279.217 & 23.583 & -0.129 & 23.454 \\
-        Forest & 126.681 & 301.541 & 18.476 & -2.951 & 15.525 \\
-        Crop & 181.188 & 307.006 & 16.040 & -3.356 & 12.684 \\
-        Savanna & 180.448 & 315.442 & 12.353 & -1.638 & 10.715 \\
-        Shrub & 150.317 & 321.178 & 18.966 & -5.755 & 13.211 \\
-        Urban & 144.108 & 302.574 & 12.388 & -0.928 & 11.460 \\
-    \end{tabular}
-    \caption{}
-\end{table}
+    \begin{table}[h!]\label{}
+        \centering
+        \begin{tabular}{c | c c | c c | c c | c c }
+            Surface & $F_{SW} $ & $F^{(cld)}_{SW}$ & $F_{LW}$ & $F^{(cld)}_{LW}$ & $\frac{dF_{SW}}{d\tau}$ & $\frac{dF_{LW}}{d\tau}$ & $\frac{dCRF}{d\tau}$ & CRF \B\\
+            \hline
+            Ocean & 112.606 & 301.863 & 279.217 & 280.211  & 23.583 & -0.129 & -23.454 & -190.251 \T\\
+            Forest & 126.681 & 190.923 & 301.541 & 291.280 & 18.476 & -2.951 & -15.525 & -53.981 \\
+            Crop & 181.188 & 249.028 & 307.006 & 292.812 & 16.040 & -3.356 & -12.684 & -53.646 \\
+            Savanna & 180.448 & 224.008 & 315.442 & 309.667 & 12.353 & -1.638 & -10.715 & -37.785 \\
+            Shrub & 150.317 & 219.108 & 321.178 & 300.303 & 18.966 & -5.755 & -13.211 & -47.916 \\
+            Urban & 144.108 & 197.317 & 302.574 & 298.587 & 12.388 & -0.928 & -11.460 & -49.222 \\
+        \end{tabular}
+        \caption{Cloud radiative forcing results from the regression technique, corresponding to the trend lines for each surface in Figures \ref{ocod1} and \ref{ocod2}. $F^{(cld)}_{SW}$ and $F^{(cld)}_{LW}$ are determined using the average flux of all pixels identified as cloudy using the thresholding described in the previous section.}
+    \end{table}
 
     \begin{figure}[h!]\label{flux-interp}
         \centering
@@ -315,9 +315,20 @@ In this report, I provide an assessment of the Cloud Radiative Forcing (CRF) and
                 \includegraphics[width=.55\linewidth]{figs/ocod_swf.png}
                 \includegraphics[width=.55\linewidth]{figs/ocod_lwf.png}
             }
+
+            \makebox[\textwidth]{
+                \includegraphics[width=.55\linewidth]{figs/lcod_swf_all-forest.png}
+                \includegraphics[width=.55\linewidth]{figs/lcod_lwf_all-forest.png}
+            }
+
+            \makebox[\textwidth]{
+                \includegraphics[width=.55\linewidth]{figs/lcod_swf_crop.png}
+                \includegraphics[width=.55\linewidth]{figs/lcod_lwf_crop.png}
+            }
+
         \end{center}
-        \caption{CERES-observed dependence of TOA shortwave and longwave flux with respect to COD. Includes all Terra and Aqua CERES footprints within the RoI that meet the above constraints between August 15 and August 25, 2021.}
-        \label{ocod}
+        \caption{CERES-observed shortwave (left) and longwave (right) dependence of ocean (top), forest (middle), and crop land (bottom) surface classes on cloud optical depth. Includes all Terra and Aqua CERES footprints within the RoI that meet the above constraints between August 15 and August 25, 2021.}
+        \label{ocod1}
     \end{figure}
 
 
@@ -325,70 +336,127 @@ In this report, I provide an assessment of the Cloud Radiative Forcing (CRF) and
         \centering
         \begin{center}
             \makebox[\textwidth]{
-                \includegraphics[width=.5\linewidth]{figs/lcod_swf_all-forest.png}
-                \includegraphics[width=.5\linewidth]{figs/lcod_lwf_all-forest.png}
+                \includegraphics[width=.55\linewidth]{figs/lcod_swf_savanna.png}
+                \includegraphics[width=.55\linewidth]{figs/lcod_lwf_savanna.png}
             }
 
             \makebox[\textwidth]{
-                \includegraphics[width=.5\linewidth]{figs/lcod_swf_crop.png}
-                \includegraphics[width=.5\linewidth]{figs/lcod_lwf_crop.png}
+                \includegraphics[width=.55\linewidth]{figs/lcod_swf_shrub.png}
+                \includegraphics[width=.55\linewidth]{figs/lcod_lwf_shrub.png}
             }
 
             \makebox[\textwidth]{
-                \includegraphics[width=.5\linewidth]{figs/lcod_swf_savanna.png}
-                \includegraphics[width=.5\linewidth]{figs/lcod_lwf_savanna.png}
-            }
-
-            \makebox[\textwidth]{
-                \includegraphics[width=.5\linewidth]{figs/lcod_swf_shrub.png}
-                \includegraphics[width=.5\linewidth]{figs/lcod_lwf_shrub.png}
-            }
-
-            \makebox[\textwidth]{
-                \includegraphics[width=.5\linewidth]{figs/lcod_swf_urban.png}
-                \includegraphics[width=.5\linewidth]{figs/lcod_lwf_urban.png}
+                \includegraphics[width=.55\linewidth]{figs/lcod_swf_urban.png}
+                \includegraphics[width=.55\linewidth]{figs/lcod_lwf_urban.png}
             }
         \end{center}
-        \caption{SW (left) and LW (right) dependence of forest, crop, savanna, shrub, and urban land surface types on COD.}
+        \caption{SW (left) and LW (right) dependence of savanna (top), shrub (middle), and urban (bottom) land surface types on cloud optical depth.}
+        \label{ocod2}
     \end{figure}
 
 
+    \clearpage
+
     \subsection{Aerosol Radiative Forcing}
 
-\begin{figure}[h!]
-    \centering
-    \begin{center}
-        \makebox[\textwidth]{
-            \includegraphics[width=.65\linewidth]{figs/20210818_aeronet_ames_sdist.png}
-            \includegraphics[width=.45\linewidth]{figs/20210818_aeronet_marked-rgb.png}
-        }
-    \end{center}
-    \caption{}
-    \label{}
-\end{figure}
+    \begin{figure}[h!]
+        \centering
+        \begin{center}
+            \makebox[\textwidth]{
+                \includegraphics[width=.46\linewidth]{figs/20210818_aeronet_marked-rgb.png}
+                \includegraphics[width=.63\linewidth]{figs/20210818_aeronet_ames_sdist.png}
+            }
 
-%\end{multicols}
+            \vspace{.5em}
 
-\section{Conclusion}
+            \makebox[\textwidth]{
+                \includegraphics[width=.55\linewidth]{figs/20210818_aeronet_ames_ssa.png}
+                \includegraphics[width=.55\linewidth]{figs/20210818_aeronet_ames_assym.png}
+            }
+        \end{center}
+        \caption{Top: Location of NASA Ames AERONET station, and cotemporal measurements of aerosol effective radius distribution. Bottom: Same AERONET station's observation of aerosol single scatter albedo and assymetry parameter. These observations informed the model calculations in Figure \ref{aero-model}.}
+        \label{aeronet}
+    \end{figure}
 
-\clearpage
+    \begin{figure}[h!]\label{flux-interp}
+        \centering
+        \begin{center}
+            \makebox[\textwidth]{
+                \includegraphics[width=.55\linewidth]{figs/model_flux_aod-ssa_sw.png}
+                \includegraphics[width=.55\linewidth]{figs/model_flux_aod-ssa_lw.png}
+            }
+        \end{center}
+        \caption{Model-derived dependence of total TOA shortwave and longwave flux with respect to aerosol optical depth (AOD) and single scatter albedo (SSA) over an ocean surface. Values were calculating using the SBDART radiative transfer model assuming an ocean surface temperature of $300\,\si{K}$, a mid-latitude Summer atmosphere, and a solar zenith angle of $20^\circ$. Shortwave flux dependence on solar zenith angle is also modeled in Figure \ref{szadep}.}
+        \label{aero-model}
+    \end{figure}
 
-\section{Appendix}
+    \begin{table}[h!]\label{}
+        \centering
+        \begin{tabular}{c | c c | c c | c c | c c}
+            Surface & $F_{SW} $ & $F^{(aer)}_{SW} $ & $F_{LW}$ & $F^{(aer)}_{LW}$ &$\frac{dF_{SW}}{d\tau}$ & $\frac{dF_{LW}}{d\tau}$ & $\frac{dARF}{d\tau}$ & ARF \B\\
+            \hline
+            Ocean & 75.280 & 91.156 & 274.705 & 278.662 & 62.307 & 14.145 & -76.452 & -19.833 \T\\
+            Forest & 136.597 & 146.987 & 299.052 & 299.079 & 23.141 & 0.312 & -23.453 & -10.417 \\
+            Savanna & 180.233 & 190.139 & 324.041 & 321.058 & 15.294 & -6.256 & -9.038 & -6.923 \\
+            Shrub & 156.140 & 170.537 & 331.089 & 327.455 & 22.228 & -13.291 & -8.937 & -10.763 \\
+        \end{tabular}
+        \caption{Results for aerosol radiative forcing using the linear regression technique.  Since the influence of outgoing longwave radiation is weakly correlated with AOD, only shortwave effects are included in the ARF.}
+    \end{table}
 
-\begin{figure}[h!]
-    \centering
-    \begin{center}
-        \makebox[\textwidth]{
-            \includegraphics[width=.48\linewidth]{figs/model_flux_aod-sza_sw.png}
-            \includegraphics[width=.48\linewidth]{figs/model_flux_cod-sza_sw.png}
-        }
-    \end{center}
-    \caption{Model-derived dependence on solar zenith angle for shortwave TOA flux with respect to aerosol optical depth (left) and cloud optical depth (right).}
-    \label{szadep}
-\end{figure}
+    \clearpage
+
+    \begin{figure}[h!]
+        \centering
+        \begin{center}
+            \makebox[\textwidth]{
+                \includegraphics[width=.55\linewidth]{figs/oaod_swf.png}
+                \includegraphics[width=.55\linewidth]{figs/oaod_lwf.png}
+            }
+
+            \makebox[\textwidth]{
+                \includegraphics[width=.55\linewidth]{figs/laod_swf_all-forest.png}
+                \includegraphics[width=.55\linewidth]{figs/laod_lwf_all-forest.png}
+            }
+
+            \makebox[\textwidth]{
+                \includegraphics[width=.55\linewidth]{figs/laod_swf_savanna.png}
+                \includegraphics[width=.55\linewidth]{figs/laod_lwf_savanna.png}
+            }
+
+            \makebox[\textwidth]{
+                \includegraphics[width=.55\linewidth]{figs/laod_swf_shrub.png}
+                \includegraphics[width=.55\linewidth]{figs/laod_lwf_shrub.png}
+            }
+        \end{center}
+        \caption{CERES-observed shortwave (left) and longwave (right) dependence of ocean (top), forest, savanna, and shrub land (bottom) surface classes on aerosol optical depth. Note that trend lines only appear nonlinear due to the logarithmically-scaled x-axis. Outgoing longwave radiation, especially over the ocean, exhibits clustering of solar zenith values, which suggests the trend is dominantly the consequence of surface temperature changes between overpass times.}
+        \label{oaod1}
+    \end{figure}
 
 
-\bibliography{main}
+    %\end{multicols}
+
+    \clearpage
+
+    \section{Conclusion}
+
+    \clearpage
+
+    \section{Appendix}
+
+    \begin{figure}[h!]
+        \centering
+        \begin{center}
+            \makebox[\textwidth]{
+                \includegraphics[width=.49\linewidth]{figs/model_flux_aod-sza_sw.png}
+                \includegraphics[width=.47\linewidth]{figs/model_flux_cod-sza_sw.png}
+            }
+        \end{center}
+        \caption{Model-derived dependence on solar zenith angle for shortwave TOA flux with respect to aerosol optical depth (left) and cloud optical depth (right).}
+        \label{szadep}
+    \end{figure}
+
+
+    \bibliography{main}
 
 \end{document}
 

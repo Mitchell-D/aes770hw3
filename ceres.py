@@ -377,8 +377,23 @@ def interp_ceres(C, lbl="swflux", plot_spec={}):
     contour_plot(clon,clat,regrid, 50, plot_spec=plot_spec)
     return None
 
+class SfcType:
+    def __init__(self, name, ids):
+        self.name = name
+        self.ids = ids
+    @property
+    def fstr(self):
+        return self.name.lower().replace(" ","-")
+    def mask(self, C):
+        I = np.copy(C.data("id_s1"))
+        mask = np.full_like(I, False)
+        for v in self.ids:
+            mask = np.logical_or(mask, (I == v))
+        return np.copy(mask)
+
 
 if __name__=="__main__":
+
     #mod09_path = Path("data/MOD09.A2021232.1900.061.2021234021126.hdf")
     #mod09_path = Path("data/MOD09.A2021232.1855.061.2021234021011.hdf")
     #mod09_path = Path("data/MOD09.A2021230.1915.061.2021232021510.hdf")
@@ -410,11 +425,6 @@ if __name__=="__main__":
     #modis = load_modis(mod09_path, vrange=(400,1400), hrange=(200,1100))
     '''
 
-    '''
-    """ Interpolate the CERES footprints onto a regular grid """
-    interp_ceres(ceres, lbl="lwflux", plot_spec={
-        "title":"LW Radiative Flux ($W\,m^{-2}$)"})
-    '''
 
     print(f"Total data points: {ceres.size}")
 
@@ -425,6 +435,7 @@ if __name__=="__main__":
     m_nocloud_wk = ceres.data("nocld_wk") > 75
     m_aocfrac_ub = ceres.data("aer_ocean_cfrac") < 5 ## MOD04 cloud fraction
     m_clr_lb = ceres.data("pct_clr") > 98
+    m_cod_lb = ceres.data("l1_cod") > 0
     ## Ocean aerosol masks
     m_aopct_ub = ceres.data("aer_ocean_pct") < 2
     m_aopct_lb = ceres.data("aer_ocean_pct") > 80
@@ -438,23 +449,77 @@ if __name__=="__main__":
     ## Flux masks
     m_swf = ceres.data("swflux") < 10000
     m_lwf = ceres.data("lwflux") < 10000
+    m_fvalid = np.logical_and(m_swf, m_lwf)
     m_laod = ceres.data("aod_land") < 100
 
-    ## l1 cloud COD
-    cod_mask = m_sdcod_ub & m_aopct_ub & m_swf & m_lwf
+    ## l1 cloud COD; includes clear pixels
+    cod_mask = m_sdcod_ub & m_aopct_ub & m_fvalid
     ocod_mask = cod_mask & m_water
-    ## Ocean AOD
+    ## Ocean AOD; includes clear pixels
     oaod_mask = m_clr_lb & m_aopct_lb & m_water
-    ## Land AOD
+    ## Land AOD; includes clear pixels
     laod_mask = m_clr_lb & m_alpct_lb & m_nowater & m_uniform & m_laod
 
-    param_sets = [
-            ("l1_cod", "swflux", "sza"),
-            ("l1_cod", "lwflux", "sza"),
-            ("aod_land", "lwflux", "sza"),
-            ("aod_ocean_small", "swflux", "sza"),
-            ("aod_ocean_small", "lwflux", "sza"),
+    """
+    Isolated masks for surface types used in forcings
+    """
+    m_cloud = np.logical_and(cod_mask,ceres.data("l1_cod")>0)
+    m_aero = np.logical_or(
+            np.logical_and(laod_mask,ceres.data("aod_land") > .1),
+            np.logical_and(oaod_mask,ceres.data("aod_ocean") > .1))
+    m_clear = np.logical_and(
+            np.logical_not(np.logical_or(m_cloud, m_aero)), m_fvalid)
+    force_masks = (m_cloud, m_aero, m_clear)
+
+    #'''
+    """ Interpolate the CERES footprints onto a regular grid """
+    tmp_ceres = ceres.mask( (m_clear & (ceres.data("id_s1")==17)) )
+    tmp_ceres.geo_scatter("swflux")
+    #interp_ceres(tmp_ceres, lbl="swflux", plot_spec={
+    #    "title":"LW Radiative Flux ($W\,m^{-2}$)"})
+    exit(0)
+    #'''
+
+    '''
+    """ Print average COD """
+    print(enh.array_stat(ceres.mask(np.logical_and(
+        ceres.data("l1_cod")<10000, m_fvalid)).data("l1_cod")))
+    '''
+
+    stypes = [
+            SfcType("Evergreen", (1, 2)),
+            SfcType("Deciduous", (3,4)),
+            SfcType("All Forest", (1,2,3,4,5)),
+            SfcType("Shrub",(6,7)),
+            #SfcType("Shrub",(7,)),
+            SfcType("Savanna",(8,9,10)),
+            SfcType("Crop",(12,14)),
+            SfcType("Bare", (16,)),
+            SfcType("Urban", (13,)),
+            SfcType("Ocean", (17,)),
             ]
+
+    #'''
+    """ Get totals for forcings """
+    print(f"--- ( Forcings ) ---")
+    for st in stypes:
+        m_tmpsfc = st.mask(ceres)
+        tmp_masks = tuple(np.logical_and(m, m_tmpsfc) for m in force_masks)
+        sw_cloud, sw_aero, sw_clear = tuple(
+                np.average(ceres.mask(m).data("swflux").data)
+                for m in tmp_masks)
+        lw_cloud, lw_aero, lw_clear = tuple(
+                np.average(ceres.mask(m).data("lwflux").data)
+                for m in tmp_masks)
+        print(f"{st.name:<12} (Count: {np.count_nonzero(st.mask(ceres))})")
+        print(f"SW cld:{sw_cloud:.3f} aer:{sw_aero:.3f} clr:{sw_clear:.3f}")
+        print(f"LW cld:{lw_cloud:.3f} aer:{lw_aero:.3f} clr:{lw_clear:.3f}")
+        tmp_crf = (sw_clear+lw_clear) - (sw_cloud+lw_cloud)
+        tmp_arf = (sw_clear+lw_clear) - (sw_aero+lw_aero)
+        print(f"CRF:{tmp_crf:.3f}  ARF:{tmp_arf:.3f}\n")
+    #'''
+    exit(0)
+
 
     '''
     #tmpc = ceres.mask(oaod_mask)
@@ -533,36 +598,6 @@ if __name__=="__main__":
 
     #'''
     """ Plot class-wise shortwave and longwave influence of AOD over land """
-    class SfcType:
-        def __init__(self, name, ids):
-            self.name = name
-            self.ids = ids
-        @property
-        def fstr(self):
-            return self.name.lower().replace(" ","-")
-        def mask(self, C):
-            I = np.copy(C.data("id_s1"))
-            mask = np.full_like(I, False)
-            for v in self.ids:
-                mask = np.logical_or(mask, (I == v))
-            return np.copy(mask)
-
-    for i in range(1,21):
-        print(i,np.count_nonzero(ceres.data("id_s1")==i))
-    exit(0)
-
-    stypes = [
-            SfcType("Evergreen", (1, 2)),
-            SfcType("Deciduous", (3,4)),
-            SfcType("All Forest", (1,2,3,4,5)),
-            SfcType("Shrub",(6,7)),
-            #SfcType("Shrub",(7,)),
-            SfcType("Savanna",(8,9,10)),
-            SfcType("Crop",(12,14)),
-            SfcType("Bare", (16,)),
-            SfcType("Urban", (13,)),
-            ]
-
     scat_plot_spec = {
             #"xlabel":"Aerosol Optical Depth",
             "xlabel":"Cloud Optical Depth",
