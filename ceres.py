@@ -456,7 +456,7 @@ if __name__=="__main__":
             ("aod_ocean_small", "lwflux", "sza"),
             ]
 
-    #'''
+    '''
     #tmpc = ceres.mask(oaod_mask)
     tmpc = ceres.mask(ocod_mask)
     tmpc.scatter(
@@ -505,7 +505,7 @@ if __name__=="__main__":
                 "text_size":26,
                 "figsize":(24,12),
                 })
-    #'''
+    '''
 
     '''
     """ Geographic scatterplot """
@@ -531,7 +531,7 @@ if __name__=="__main__":
     '''
 
 
-    '''
+    #'''
     """ Plot class-wise shortwave and longwave influence of AOD over land """
     class SfcType:
         def __init__(self, name, ids):
@@ -547,11 +547,16 @@ if __name__=="__main__":
                 mask = np.logical_or(mask, (I == v))
             return np.copy(mask)
 
+    for i in range(1,21):
+        print(i,np.count_nonzero(ceres.data("id_s1")==i))
+    exit(0)
+
     stypes = [
             SfcType("Evergreen", (1, 2)),
             SfcType("Deciduous", (3,4)),
             SfcType("All Forest", (1,2,3,4,5)),
             SfcType("Shrub",(6,7)),
+            #SfcType("Shrub",(7,)),
             SfcType("Savanna",(8,9,10)),
             SfcType("Crop",(12,14)),
             SfcType("Bare", (16,)),
@@ -574,40 +579,40 @@ if __name__=="__main__":
 
     for st in stypes:
         try:
-            #tmp_mask = st.mask(ceres) & laod_mask
-            tmp_mask = st.mask(ceres) & cod_mask
+            tmp_mask = st.mask(ceres) & laod_mask
+            #tmp_mask = st.mask(ceres) & cod_mask
             print(f"{st.name} Nonzero: {np.count_nonzero(tmp_mask)}")
             tmpc = ceres.mask(tmp_mask)
 
             scat_plot_spec["title"] = \
-                    f"SW Flux vs COD Over Land ({st.name})"
-                    #f"SW Smoke Aerosol Effect Over Land ({st.name})"
+                    f"SW Smoke Aerosol Effect Over Land ({st.name})"
+                    #f"SW Flux vs COD Over Land ({st.name})"
             scat_plot_spec["ylabel"] = "Reflected Shortwave Flux"
             tmpc.scatter(
-                    #"aod_land", "swflux", "sza",
-                    "l1_cod", "swflux", "sza",
+                    "aod_land", "swflux", "sza",
+                    #"l1_cod", "swflux", "sza",
                     get_trend=True,
                     show=False,
-                    #fig_path=Path(f"figures/laod_swf_{st.fstr}.png"),
-                    fig_path=Path(f"figures/lcod_swf_{st.fstr}.png"),
+                    fig_path=Path(f"figures/laod_swf_{st.fstr}.png"),
+                    #fig_path=Path(f"figures/lcod_swf_{st.fstr}.png"),
                     plot_spec=scat_plot_spec
                     )
             scat_plot_spec["title"] = \
-                    f"LW Flux vs COD Over Land ({st.name})"
-                    #f"LW Smoke Aerosol Effect Over Land ({st.name})"
+                    f"LW Smoke Aerosol Effect Over Land ({st.name})"
+                    #f"LW Flux vs COD Over Land ({st.name})"
             scat_plot_spec["ylabel"] = "Outgoing Longwave Flux"
             tmpc.scatter(
-                    #"aod_land", "lwflux", "sza",
-                    "l1_cod", "lwflux", "sza",
+                    "aod_land", "lwflux", "sza",
+                    #"l1_cod", "lwflux", "sza",
                     get_trend=True,
                     show=False,
-                    #fig_path=Path(f"figures/laod_lwf_{st.fstr}.png"),
-                    fig_path=Path(f"figures/lcod_lwf_{st.fstr}.png"),
+                    fig_path=Path(f"figures/laod_lwf_{st.fstr}.png"),
+                    #fig_path=Path(f"figures/lcod_lwf_{st.fstr}.png"),
                     plot_spec=scat_plot_spec
                     )
         except ValueError as e:
             continue
-    '''
+    #'''
     exit(0)
 
     ceres = ceres.mask(mask)
